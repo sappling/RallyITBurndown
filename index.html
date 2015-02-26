@@ -1,0 +1,54 @@
+<html>
+<head>
+  <script type="text/javascript"
+          src="https://rally1.rallydev.com/apps/1.25/sdk.js?loginKey=__INSERT_YOUR_KEY_HERE__">
+  </script>
+  <script type="text/javascript" src="parseuri.js"></script>
+  <script type="text/javascript">
+      function drawGraph() {
+      	  var defaultProject = "";		// add a default project here if desired
+      	  var defaultWorkspace = "";	// add a default workspace here if desired
+          var projectID = parseUri(location.href).queryKey.project || defaultProject;
+          var workspaceID = parseUri(location.href).queryKey.workspace || defaultWorkspace;
+          
+      	  function onComplete(results) {
+      	  	  if (results.iterations.length > 0) {
+      	  	  	  var itID = results.iterations[0].ObjectID
+      	  	  	  
+				  var reportConfig = {report: rally.sdk.ui.StandardReport.IterationBurndown, width : 600, height: 400, 
+					projects:["/project/"+projectID],
+					iterations: [itID]
+				  };
+				  var report = new rally.sdk.ui.StandardReport(reportConfig);
+				  report.display("reportDiv");
+      	  	  }
+      	  }
+      	  
+      	  function onError(response) {
+      	  	  alert("Error looking up data for iteration:"+response.Errors);
+      	  	  console.log("Error");
+      	  	  console.log(response.Errors);
+      	  }
+      	  
+          rallyDataSource = new rally.sdk.data.RallyDataSource(workspaceID, projectID, false, true)
+          var today = rally.sdk.util.DateTime.toIsoString(new Date());
+          rallyDataSource.find({
+			 key: "iterations",
+			 type: "iteration",
+			 query: '((StartDate < ' + today + ') AND (EndDate > '+ today+'))',
+			 fetch: true,
+			 pagesize:10
+			 }, onComplete, onError);
+      }
+  
+      function onLoad() {
+          rally.sdk.ui.AppHeader.destroy();
+          drawGraph();
+      }
+      rally.addOnLoad(onLoad);
+  </script>
+</head>
+<body>
+  <div id="reportDiv" style="float:left; width: 400px; margin-left:20px"></div>
+</body>
+</html>
